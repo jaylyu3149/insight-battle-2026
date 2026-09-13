@@ -1,1 +1,227 @@
 # insight-battle-2026
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라이브 투표 시스템</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .voter-screen { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .header p { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 2rem; }
+        .form-label { font-size: 14px; color: #666; margin-bottom: 12px; display: block; font-weight: 500; }
+        .team-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2rem; }
+        .team-btn { padding: 16px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .team-btn:hover { border-color: #999; }
+        .team-btn.selected-blue { border-color: #4A90E2; background: #E6F1FB; color: #185FA5; }
+        .team-btn.selected-white { border-color: #888780; background: #F1EFE8; color: #444441; }
+        .score-slider { width: 100%; height: 6px; border-radius: 3px; background: #ddd; outline: none; }
+        .score-display { text-align: center; font-size: 13px; color: #666; margin-bottom: 12px; }
+        .score-labels { display: flex; justify-content: space-between; font-size: 12px; color: #999; margin-top: 8px; }
+        .vote-btn { width: 100%; padding: 14px; background: #4A90E2; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .vote-btn:hover { background: #3875C5; }
+        .success-msg { background: #E8F5E9; border: 1px solid #4CAF50; border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1.5rem; }
+        .success-msg p { color: #2E7D32; margin: 0; font-weight: 500; }
+        .success-msg .sub { font-size: 12px; color: #388E3C; margin-top: 4px; }
+        .admin-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .admin-header { grid-column: 1 / -1; margin-bottom: 1rem; }
+        .stat-card { background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; padding: 1.5rem; }
+        .stat-label { font-size: 13px; color: #999; margin-bottom: 12px; }
+        .stat-value { font-size: 32px; font-weight: 600; margin-bottom: 8px; }
+        .stat-blue .stat-value { color: #185FA5; }
+        .stat-white .stat-value { color: #444441; }
+        .stat-sub { font-size: 12px; color: #999; }
+        .total-scores { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 1rem 0; }
+        .total-card { border-radius: 12px; padding: 2rem; text-align: center; }
+        .total-card-blue { background: #E6F1FB; border: 1px solid #85B7EB; }
+        .total-card-white { background: #F1EFE8; border: 1px solid #B4B2A9; }
+        .total-label { font-size: 13px; margin-bottom: 12px; font-weight: 500; }
+        .total-label-blue { color: #185FA5; }
+        .total-label-white { color: #444441; }
+        .total-value { font-size: 48px; font-weight: 600; }
+        .total-value-blue { color: #185FA5; }
+        .total-value-white { color: #444441; }
+        .next-btn { grid-column: 1 / -1; padding: 14px; background: #4A90E2; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .next-btn:hover { background: #3875C5; }
+        .final-msg { grid-column: 1 / -1; background: #E8F5E9; border: 1px solid #4CAF50; border-radius: 12px; padding: 2rem; text-align: center; }
+        .final-msg p { color: #2E7D32; margin: 0; font-weight: 600; font-size: 18px; }
+        .final-msg .final-sub { color: #388E3C; font-size: 14px; margin-top: 8px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="voter-area" class="container hidden">
+        <div class="voter-screen">
+            <div class="header">
+                <h1>라운드 <span id="round-num">1</span></h1>
+                <p>A, B 발표를 평가해주세요</p>
+            </div>
+            <div id="voted-msg" class="success-msg hidden">
+                <p>✓ 투표가 완료되었습니다</p>
+                <div class="sub">다음 라운드를 기다려주세요</div>
+            </div>
+            <div id="vote-form">
+                <div class="form-group">
+                    <label class="form-label">팀 선택</label>
+                    <div class="team-buttons">
+                        <button class="team-btn" id="blue-btn" onclick="selectTeam('blue')">청팀 (A)</button>
+                        <button class="team-btn" id="white-btn" onclick="selectTeam('white')">백팀 (B)</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">점수 선택</label>
+                    <div class="score-display">점수: <span id="score-display">3</span>점</div>
+                    <input type="range" id="score-slider" class="score-slider" min="1" max="5" value="3" oninput="updateScore(this.value)">
+                    <div class="score-labels"><span>1점</span><span>5점</span></div>
+                </div>
+                <button class="vote-btn" onclick="submitVote()">투표하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-area" class="container hidden">
+        <div class="admin-header">
+            <h1>투표 관리 대시보드</h1>
+            <p>라운드 <span id="admin-round">1</span> / 5</p>
+        </div>
+        <div class="admin-dashboard">
+            <div class="stat-card stat-blue">
+                <div class="stat-label">청팀 (A)</div>
+                <div class="stat-value" id="blue-avg">0.0</div>
+                <div class="stat-sub"><span id="blue-count">0</span>명 투표</div>
+            </div>
+            <div class="stat-card stat-white">
+                <div class="stat-label">백팀 (B)</div>
+                <div class="stat-value" id="white-avg">0.0</div>
+                <div class="stat-sub"><span id="white-count">0</span>명 투표</div>
+            </div>
+            <div class="total-scores">
+                <div class="total-card total-card-blue">
+                    <div class="total-label total-label-blue">청팀 누적점</div>
+                    <div class="total-value total-value-blue" id="blue-total">0.0</div>
+                </div>
+                <div class="total-card total-card-white">
+                    <div class="total-label total-label-white">백팀 누적점</div>
+                    <div class="total-value total-value-white" id="white-total">0.0</div>
+                </div>
+            </div>
+            <button id="next-btn" class="next-btn" onclick="nextRound()">다음 라운드로</button>
+            <div id="final-msg" class="final-msg hidden">
+                <p id="winner-text">🎉 청팀 승리!</p>
+                <div class="final-sub" id="winner-score">청팀: 15.0점 | 백팀: 14.5점</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRound = 1, selectedTeam = 'blue', hasVoted = false, votes = {}, isAdmin = false;
+
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            isAdmin = params.get('admin') === 'true';
+            if (isAdmin) { document.getElementById('admin-area').classList.remove('hidden'); } 
+            else { document.getElementById('voter-area').classList.remove('hidden'); }
+            loadData(); selectTeam('blue'); updateDisplay();
+            if (!isAdmin) { setInterval(checkNewRound, 2000); }
+            if (isAdmin) { setInterval(updateDisplay, 1000); }
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem('voting_data');
+            if (stored) { const data = JSON.parse(stored); votes = data.votes || {}; currentRound = data.currentRound || 1; }
+        }
+
+        function saveData() { localStorage.setItem('voting_data', JSON.stringify({ votes, currentRound })); }
+
+        function selectTeam(team) {
+            selectedTeam = team;
+            document.getElementById('blue-btn').classList.remove('selected-blue');
+            document.getElementById('white-btn').classList.remove('selected-white');
+            if (team === 'blue') { document.getElementById('blue-btn').classList.add('selected-blue'); } 
+            else { document.getElementById('white-btn').classList.add('selected-white'); }
+        }
+
+        function updateScore(value) { document.getElementById('score-display').textContent = value; }
+
+        function submitVote() {
+            const score = parseInt(document.getElementById('score-slider').value);
+            const roundKey = 'round_' + currentRound;
+            if (!votes[roundKey]) { votes[roundKey] = {}; }
+            const voteId = selectedTeam + '_' + Date.now();
+            votes[roundKey][voteId] = score;
+            saveData();
+            hasVoted = true;
+            document.getElementById('vote-form').classList.add('hidden');
+            document.getElementById('voted-msg').classList.remove('hidden');
+            sessionStorage.setItem('voted_' + currentRound, 'true');
+        }
+
+        function checkNewRound() {
+            const stored = localStorage.getItem('voting_data');
+            if (stored) {
+                const data = JSON.parse(stored);
+                const newRound = data.currentRound || 1;
+                if (newRound !== currentRound) {
+                    currentRound = newRound;
+                    hasVoted = false;
+                    sessionStorage.removeItem('voted_' + currentRound);
+                    document.getElementById('round-num').textContent = currentRound;
+                    document.getElementById('vote-form').classList.remove('hidden');
+                    document.getElementById('voted-msg').classList.add('hidden');
+                    document.getElementById('score-slider').value = 3;
+                    updateScore(3); selectTeam('blue');
+                }
+            }
+        }
+
+        function getRoundStats(round) {
+            const roundKey = 'round_' + round;
+            const roundVotes = votes[roundKey] || {};
+            const blueVotes = Object.entries(roundVotes).filter(([key]) => key.startsWith('blue')).map(([, score]) => score);
+            const whiteVotes = Object.entries(roundVotes).filter(([key]) => key.startsWith('white')).map(([, score]) => score);
+            const blueAvg = blueVotes.length > 0 ? (blueVotes.reduce((a, b) => a + b, 0) / blueVotes.length).toFixed(1) : '0.0';
+            const whiteAvg = whiteVotes.length > 0 ? (whiteVotes.reduce((a, b) => a + b, 0) / whiteVotes.length).toFixed(1) : '0.0';
+            return { blueAvg, whiteAvg, blueCount: blueVotes.length, whiteCount: whiteVotes.length };
+        }
+
+        function getTotalScores() {
+            let blueTotal = 0, whiteTotal = 0;
+            for (let r = 1; r <= currentRound; r++) {
+                const { blueAvg, whiteAvg } = getRoundStats(r);
+                blueTotal += parseFloat(blueAvg) || 0;
+                whiteTotal += parseFloat(whiteAvg) || 0;
+            }
+            return { blueTotal: blueTotal.toFixed(1), whiteTotal: whiteTotal.toFixed(1) };
+        }
+
+        function updateDisplay() {
+            if (!isAdmin) return;
+            const stats = getRoundStats(currentRound);
+            const totals = getTotalScores();
+            document.getElementById('admin-round').textContent = currentRound;
+            document.getElementById('blue-avg').textContent = stats.blueAvg;
+            document.getElementById('white-avg').textContent = stats.whiteAvg;
+            document.getElementById('blue-count').textContent = stats.blueCount;
+            document.getElementById('white-count').textContent = stats.whiteCount;
+            document.getElementById('blue-total').textContent = totals.blueTotal;
+            document.getElementById('white-total').textContent = totals.whiteTotal;
+            if (currentRound === 5) {
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('final-msg').classList.remove('hidden');
+                const winner = totals.blueTotal > totals.whiteTotal ? '청팀' : '백팀';
+                document.getElementById('winner-text').textContent = '🎉 ' + winner + ' 승리!';
+                document.getElementById('winner-score').textContent = '청팀: ' + totals.blueTotal + '점 | 백팀: ' + totals.whiteTotal + '점';
+            }
+        }
+
+        function nextRound() { if (currentRound < 5) { currentRound++; saveData(); updateDisplay(); } }
+
+        init();
+    </script>
+</body>
+</html>
