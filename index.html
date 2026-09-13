@@ -13,7 +13,7 @@
         <div class="voter">
             <div class="header">
                 <h1>라운드 <span id="rnd">1</span></h1>
-                <p>A, B 발표를 평가해주세요</p>
+                <p>각 스피커별 인사이트 점수를 투표해주세요</p>
             </div>
             <div id="done" class="msg hidden">
                 <p>✓ 투표가 완료되었습니다</p>
@@ -22,8 +22,8 @@
                 <div class="form-group">
                     <label class="label">팀 선택</label>
                     <div class="team-buttons">
-                        <button class="btn" id="bb" onclick="selectTeam('blue')">청팀 (A)</button>
-                        <button class="btn" id="bw" onclick="selectTeam('white')">백팀 (B)</button>
+                        <button class="btn" id="bb" onclick="selectTeam('red')">KMBA (A)</button>
+                        <button class="btn" id="bw" onclick="selectTeam('blue')">YMBA (B)</button>
                     </div>
                 </div>
                 <div class="form-group">
@@ -44,28 +44,28 @@
         </div>
         <div class="admin">
             <div class="card blue">
-                <div class="label-stat">청팀 (A)</div>
+                <div class="label-stat">KMBA (A)</div>
                 <div class="value" id="ba">0.0</div>
                 <div class="sub"><span id="bc">0</span>명 투표</div>
             </div>
             <div class="card white">
-                <div class="label-stat">백팀 (B)</div>
+                <div class="label-stat">YMBA (B)</div>
                 <div class="value" id="wa">0.0</div>
                 <div class="sub"><span id="wc">0</span>명 투표</div>
             </div>
             <div class="total">
                 <div class="total-card total-blue">
-                    <div class="total-label total-label-blue">청팀 누적점</div>
+                    <div class="total-label total-label-blue">KMBA 누적점</div>
                     <div class="total-value" id="bt">0.0</div>
                 </div>
                 <div class="total-card total-white">
-                    <div class="total-label total-label-white">백팀 누적점</div>
+                    <div class="total-label total-label-white">YMBA 누적점</div>
                     <div class="total-value" id="wt">0.0</div>
                 </div>
             </div>
             <button id="nb" class="next" onclick="nextRound()">다음 라운드로</button>
             <div id="fin" class="final hidden">
-                <p id="win">🎉 청팀 승리!</p>
+                <p id="win">🎉KMBA 승리!</p>
                 <div class="final-sub" id="ws"></div>
             </div>
         </div>
